@@ -4,8 +4,11 @@ from mcstatusFuncs import playerNames
 from mcrconFuncs import executeCommand
 import json
 import os
+from dotenv import load_dotenv
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+load_dotenv()
+
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 def get_prefix(client, message):
     return client.data[str(message.guild.id)]["prefix"]
