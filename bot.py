@@ -91,5 +91,9 @@ async def ip(ctx):
 @client.command()
 async def ping(ctx):
     await ctx.send(f'Current ping: {round(client.latency * 1000)}ms.')
+    
+@client.command()
+async def github(ctx):
+    await ctx.send('https://github.com/CrashAndSideburns/Minecraft-Admin-o-matic-9000')
 
 client.run(BOT_TOKEN)
