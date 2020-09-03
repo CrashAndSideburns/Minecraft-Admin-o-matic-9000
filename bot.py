@@ -110,7 +110,6 @@ async def allowchannel(ctx):
 
 @client.command()
 @commands.check(is_allowed_channel)
-@commands.check(is_allowed_channel)
 async def online(ctx):
     await ctx.send(playerNames(get_ip(ctx), get_port(ctx)))
 
