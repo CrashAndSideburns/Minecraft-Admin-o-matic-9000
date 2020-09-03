@@ -27,6 +27,14 @@ def get_rcon_password(message):
     return client.data[str(message.guild.id)]["rcon_password"]
 
 
+def get_allowed_channels(message):
+    return client.data[str(message.guild.id)]['allowed_channels']
+
+
+def is_allowed_channel(message):
+    return str(message.channel.id) in get_allowed_channels(message)
+
+
 def save():
     with open('data.json', 'w') as f:
         json.dump(client.data, f, indent=4)
@@ -51,6 +59,7 @@ async def on_guild_join(guild):
     client.data[str(guild.id)]["ip"] = ""
     client.data[str(guild.id)]["port"] = "25565"
     client.data[str(guild.id)]["rcon_password"] = ""
+    client.data[str(guild.id)]["allowed_channels"] = []
     save()
 
 
@@ -61,6 +70,7 @@ async def on_guild_remove(guild):
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setip(ctx, ip):
     client.data[str(ctx.guild.id)]["ip"] = ip
@@ -68,6 +78,7 @@ async def setip(ctx, ip):
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setport(ctx, port):
     client.data[str(ctx.guild.id)]["port"] = port
@@ -75,6 +86,7 @@ async def setport(ctx, port):
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setprefix(ctx, prefix):
     client.data[str(ctx.guild.id)]["prefix"] = prefix
@@ -82,6 +94,7 @@ async def setprefix(ctx, prefix):
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setrconpassword(ctx, rcon_password):
     client.data[str(ctx.guild.id)]["rcon_password"] = rcon_password
@@ -89,34 +102,55 @@ async def setrconpassword(ctx, rcon_password):
 
 
 @client.command()
+@commands.has_guild_permissions(administrator=True)
+async def allowchannel(ctx):
+    client.data[str(ctx.guild.id)]["allowed_channels"].append(str(ctx.channel.id))
+    save()
+
+
+@client.command()
+@commands.check(is_allowed_channel)
+@commands.check(is_allowed_channel)
 async def online(ctx):
     await ctx.send(playerNames(get_ip(ctx), get_port(ctx)))
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def command(ctx, *, argument):
     await ctx.send(executeCommand(get_ip(ctx), get_rcon_password(ctx), argument))
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 async def seed(ctx):
     await ctx.send(executeCommand(get_ip(ctx), get_rcon_password(ctx), '/seed'))
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 async def ip(ctx):
     await ctx.send(get_ip(ctx))
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 async def ping(ctx):
     await ctx.send(f'Current ping: {round(client.latency * 1000)}ms.')
 
 
 @client.command()
+@commands.check(is_allowed_channel)
 async def github(ctx):
     await ctx.send('https://github.com/CrashAndSideburns/Minecraft-Admin-o-matic-9000')
+
+
+@client.command()
+@commands.check(is_allowed_channel)
+@commands.has_guild_permissions(administrator=True)
+async def jsondump(ctx):
+    await ctx.send(client.data)
 
 
 client.run(BOT_TOKEN)
