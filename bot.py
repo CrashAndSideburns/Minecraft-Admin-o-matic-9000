@@ -103,8 +103,17 @@ async def setrconpassword(ctx, rcon_password):
 
 @client.command()
 @commands.has_guild_permissions(administrator=True)
-async def allowchannel(ctx):
-    client.data[str(ctx.guild.id)]["allowed_channels"].append(str(ctx.channel.id))
+async def channel(ctx, arg):
+    if arg == "add":
+        if str(ctx.channel.id) not in get_allowed_channels(ctx):
+            client.data[str(ctx.guild.id)]["allowed_channels"].append(str(ctx.channel.id))
+        else:
+            pass
+    if arg == "remove":
+        try:
+            client.data[str(ctx.guild.id)]["allowed_channels"].remove(str(ctx.channel.id))
+        except:
+            pass
     save()
 
 
