@@ -2,46 +2,20 @@ import discord
 from discord.ext import commands
 from mcstatusFuncs import playerNames
 from mcrconFuncs import executeCommand
-import json
 import os
+import sqlite3
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
+db = sqlite3.connect('data.db')
+cursor = db.cursor()
+
 
 def get_prefix(client, message):
-    return client.data[str(message.guild.id)]["prefix"]
-
-
-def get_ip(message):
-    return client.data[str(message.guild.id)]["ip"]
-
-
-def get_port(message):
-    return client.data[str(message.guild.id)]["port"]
-
-
-def get_rcon_password(message):
-    return client.data[str(message.guild.id)]["rcon_password"]
-
-
-def get_allowed_channels(message):
-    return client.data[str(message.guild.id)]['allowed_channels']
-
-
-def is_allowed_channel(message):
-    return str(message.channel.id) in get_allowed_channels(message)
-
-
-def save():
-    with open('data.json', 'w') as f:
-        json.dump(client.data, f, indent=4)
-
+    cursor.execute(f'SELECT prefix FROM guild_data WHERE guild_id={message.guild.id}')
+    return cursor.fetchall()[0][0]
 
 client = commands.Bot(command_prefix=get_prefix)
-
-with open('data.json', 'r') as f:
-    client.data = json.load(f)
-
 
 @client.event
 async def on_ready():
@@ -49,28 +23,52 @@ async def on_ready():
     print('Bot is online!')
 
 
+def get_ip(message):
+    cursor.execute(f'SELECT ip FROM guild_data WHERE guild_id={message.guild.id}')
+    return cursor.fetchall()[0][0]
+
+
+def get_port(message):
+    cursor.execute(f'SELECT port FROM guild_data WHERE guild_id={message.guild.id}')
+    return cursor.fetchall()[0][0]
+
+
+def get_rcon_password(message):
+    cursor.execute(f'SELECT rcon_password FROM guild_data WHERE guild_id={message.guild.id}')
+    return cursor.fetchall()[0][0]
+
+
+def get_allowed_channels(message):
+    cursor.execute(f'SELECT channel_id FROM allowed_channels WHERE guild_id={message.guild.id}')
+    return [channel_id[0] for channel_id in cursor.fetchall()]
+
+
+def is_allowed_channel(message):
+    return str(message.channel.id) in get_allowed_channels(message)
+
+
+def save():
+    db.commit()
+
+
+
 @client.event
 async def on_guild_join(guild):
-    client.data[str(guild.id)] = {}
-    client.data[str(guild.id)]["prefix"] = "mc."
-    client.data[str(guild.id)]["ip"] = ""
-    client.data[str(guild.id)]["port"] = "25565"
-    client.data[str(guild.id)]["rcon_password"] = ""
-    client.data[str(guild.id)]["allowed_channels"] = []
+    cursor.execute(f'INSERT INTO guild_data (guild_id,prefix,ip,port,rcon_password) VALUES ("{guild.id}","mc.","","25565","")')
     save()
 
 
 @client.event
 async def on_guild_remove(guild):
-    client.data.pop(str(guild.id))
+    cursor.execute(f'DELETE FROM guild_data WHERE guild_id="{guild.id}""')
     save()
 
-
+#to fix
 @client.command()
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setip(ctx, ip):
-    client.data[str(ctx.guild.id)]["ip"] = ip
+    cursor.execute(f'UPDATE guild_data SET ip="{ip}" WHERE guild_id="{ctx.guild.id}"')
     save()
 
 
@@ -78,7 +76,7 @@ async def setip(ctx, ip):
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setport(ctx, port):
-    client.data[str(ctx.guild.id)]["port"] = port
+    cursor.execute(f'UPDATE guild_data SET "port={port}" WHERE guild_id="{ctx.guild.id}"')
     save()
 
 
@@ -86,7 +84,7 @@ async def setport(ctx, port):
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setprefix(ctx, prefix):
-    client.data[str(ctx.guild.id)]["prefix"] = prefix
+    cursor.execute(f'UPDATE guild_data SET prefix="{prefix}" WHERE guild_id="{ctx.guild.id}"')
     save()
 
 
@@ -94,7 +92,7 @@ async def setprefix(ctx, prefix):
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
 async def setrconpassword(ctx, rcon_password):
-    client.data[str(ctx.guild.id)]["rcon_password"] = rcon_password
+    cursor.execute(f'UPDATE guild_data SET rcon_password="{rcon_password}" WHERE guild_id="{ctx.guild.id}"')
     save()
 
 
@@ -103,12 +101,12 @@ async def setrconpassword(ctx, rcon_password):
 async def channel(ctx, arg):
     if arg == "add":
         if str(ctx.channel.id) not in get_allowed_channels(ctx):
-            client.data[str(ctx.guild.id)]["allowed_channels"].append(str(ctx.channel.id))
+            cursor.execute(f'INSERT INTO allowed_channels (guild_id,channel_id) VALUES ("{ctx.guild.id}","{ctx.channel.id}")')
         else:
             pass
-    if arg == "remove":
+    elif arg == "remove":
         try:
-            client.data[str(ctx.guild.id)]["allowed_channels"].remove(str(ctx.channel.id))
+            cursor.execute(f'DELETE FROM allowed_channels WHERE guild_id="{ctx.guild.id}" AND channel_id="{ctx.channel.id}"')
         except:
             pass
     save()
@@ -154,8 +152,9 @@ async def github(ctx):
 @client.command()
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
-async def jsondump(ctx):
-    await ctx.send(client.data)
+async def dbdump(ctx):
+    cursor.execute(f'SELECT * FROM guild_data JOIN allowed_channels ON guild_data.guild_id=allowed_channels.guild_id')
+    await ctx.send(cursor.fetchall())
 
 
 client.run(BOT_TOKEN)
