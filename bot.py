@@ -17,6 +17,11 @@ def get_prefix(client, message):
 
 client = commands.Bot(command_prefix=get_prefix)
 
+## TODO
+## If data.db does not exist, create it and the relevant tables
+## Check that each guild that the bot is in corresponds to an entry in the guild_data table
+## If necessary, remove any redundant rows and add any missing rows in guild_data
+## Remove any reduntant rows in the allowed_channels table too
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game('Running Minecraft Servers'))
