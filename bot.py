@@ -63,7 +63,7 @@ async def on_guild_remove(guild):
     cursor.execute(f'DELETE FROM guild_data WHERE guild_id="{guild.id}""')
     save()
 
-#to fix
+
 @client.command()
 @commands.check(is_allowed_channel)
 @commands.has_guild_permissions(administrator=True)
