@@ -5,10 +5,9 @@ class DebugCommands(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    async def cog_check(self, ctx):
-        return ctx.author.id == 401472148796866560
-
     @commands.command()
+    #@commands.check(is_allowed_channel)
+    #@commands.has_guild_permissions(administrator=True)
     async def dbdump(self, ctx):
         self.client.cursor.execute(f'SELECT * FROM guild_data LEFT JOIN allowed_channels ON guild_data.guild_id=allowed_channels.guild_id')
         await ctx.send(self.client.cursor.fetchall())
