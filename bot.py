@@ -12,7 +12,7 @@ cogs = ['cogs.DatabaseManipulationCommands',
         'cogs.MCStatusCommands']
 
 def get_prefix(client, message):
-    client.cursor.execute(f'SELECT prefix FROM guild_data WHERE guild_id={message.guild.id}')
+    client.cursor.execute(f'SELECT prefix FROM guild_data WHERE guild_id="{message.guild.id}"')
     return client.cursor.fetchall()[0][0]
 
 client = commands.Bot(command_prefix=get_prefix)
@@ -54,8 +54,8 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_guild_remove(guild):
-    client.cursor.execute(f'DELETE FROM guild_data WHERE guild_id="{guild.id}""')
+    client.cursor.execute(f'DELETE FROM guild_data WHERE guild_id="{guild.id}"')
     client.db.commit()
 
 
-client.run(BOT_TOKEN)
+client.run('NzQxMTMwNjAwNTA0NjIzMTU0.XyzFqA.xWxz-05IZSm-HvkM0kkofRVhfI4')
